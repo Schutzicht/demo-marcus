@@ -1,0 +1,51 @@
+---
+import Base from "../layouts/Base.astro";
+import Zellige from "../components/Zellige.astro";
+import { HIGHTEA } from "../data/site";
+---
+
+<Base title="High Tea — Koffiebar Marcus" active="/high-tea">
+  <header class="vignette grain relative flex min-h-[78vh] items-end overflow-hidden bg-ink">
+    <img src="/img/hightea.webp" alt="High tea bij Marcus" class="absolute inset-0 h-full w-full object-cover" />
+    <div class="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 sm:px-10">
+      <p class="eyebrow text-saffron" data-reveal>Reserveer je tafel</p>
+      <h1 class="mt-4 text-mega font-semibold text-cream" data-reveal>High Tea</h1>
+      <p class="mt-5 max-w-lg text-lg text-cream/85" data-reveal data-reveal-delay="1">{HIGHTEA.blurb}</p>
+    </div>
+  </header>
+
+  <section class="relative overflow-hidden bg-cream py-24 sm:py-32">
+    <Zellige class="pointer-events-none absolute -left-24 top-10 h-96 w-96" color="#bd5a35" opacity={0.07} />
+    <div class="mx-auto max-w-7xl px-6 sm:px-10">
+      <div class="flex flex-col items-center text-center" data-reveal>
+        <p class="eyebrow text-clay">Drie etages, alles vers</p>
+        <h2 class="mt-4 text-giant font-semibold text-ink">€ {HIGHTEA.price}</h2>
+        <p class="mt-2 text-ink/60">{HIGHTEA.per}</p>
+      </div>
+
+      <div class="mt-16 grid gap-6 md:grid-cols-3">
+        {
+          HIGHTEA.tiers.map((tier, i) => (
+            <div class="lift relative overflow-hidden rounded-3xl border border-ink/10 bg-plaster p-8" data-reveal data-reveal-delay={i + 1}>
+              <span class="font-display text-6xl text-clay/20">0{i + 1}</span>
+              <h3 class="-mt-5 font-display text-2xl font-semibold text-ink">{tier.name}</h3>
+              <ul class="mt-5 space-y-2.5">
+                {tier.items.map((it) => (
+                  <li class="flex items-start gap-2 text-ink/75">
+                    <svg width="16" height="16" viewBox="0 0 24 24" class="mt-1 shrink-0 text-saffron"><path d="M12 2l2.9 6.3L22 9.3l-5 4.7 1.3 6.9L12 17.6 5.7 20.9 7 14 2 9.3l7.1-1z" fill="currentColor"/></svg>
+                    {it}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="mt-16 flex flex-col items-center gap-4 text-center" data-reveal>
+        <a href="/reserveren" class="press rounded-full bg-ink px-9 py-4 text-sm font-semibold text-cream">Reserveer je high tea</a>
+        <p class="text-sm text-ink/50">Minimaal een dag vooruit reserveren, vanaf 2 personen.</p>
+      </div>
+    </div>
+  </section>
+</Base>

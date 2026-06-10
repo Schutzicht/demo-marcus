@@ -1,0 +1,103 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../data/site";
+const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
+  SITE.address.street + ", " + SITE.address.zip + " " + SITE.address.city
+)}&output=embed`;
+---
+
+<Base title="Reserveren — Koffiebar Marcus" active="/reserveren">
+  <header class="relative overflow-hidden bg-espresso pt-32 text-cream grain sm:pt-40">
+    <div class="relative mx-auto max-w-7xl px-6 pb-14 sm:px-10">
+      <p class="eyebrow text-saffron" data-reveal>Tot snel aan het Bellamypark</p>
+      <h1 class="mt-4 text-mega font-semibold" data-reveal>Reserveren</h1>
+    </div>
+  </header>
+
+  <section class="bg-cream py-20 sm:py-24">
+    <div class="mx-auto grid max-w-7xl gap-14 px-6 sm:px-10 lg:grid-cols-[1.1fr_0.9fr]">
+      <!-- form -->
+      <div data-reveal>
+        <form id="resForm" class="rounded-3xl border border-ink/10 bg-plaster p-7 sm:p-9">
+          <h2 class="font-display text-3xl font-semibold text-ink">Vraag een tafel aan</h2>
+          <p class="mt-2 text-sm text-ink/55">Demo-formulier. We bevestigen normaal binnen een paar uur.</p>
+          <div class="mt-7 grid gap-5 sm:grid-cols-2">
+            <label class="block">
+              <span class="text-sm font-medium text-ink/70">Naam</span>
+              <input required name="naam" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium text-ink/70">Telefoon</span>
+              <input name="tel" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium text-ink/70">Datum</span>
+              <input required type="date" name="datum" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium text-ink/70">Aantal personen</span>
+              <input required type="number" min="1" max="20" value="2" name="personen" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="text-sm font-medium text-ink/70">Opmerking</span>
+              <textarea name="bericht" rows="3" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" placeholder="High tea, kinderstoel, allergie..."></textarea>
+            </label>
+          </div>
+          <button type="submit" class="press mt-7 w-full rounded-full bg-ink py-4 text-sm font-semibold text-cream sm:w-auto sm:px-10">Verstuur aanvraag</button>
+          <p id="resOk" class="mt-4 hidden rounded-xl bg-zellige/10 px-4 py-3 text-sm text-zellige">
+            Bedankt! Dit is een demo, dus er wordt nog niets verstuurd. In de live site landt dit bij Marcus.
+          </p>
+        </form>
+      </div>
+
+      <!-- contact + hours -->
+      <div class="flex flex-col gap-8" data-reveal data-reveal-delay="1">
+        <div>
+          <p class="eyebrow text-clay">Vind ons</p>
+          <p class="mt-4 font-display text-2xl text-ink">{SITE.address.street}</p>
+          <p class="text-ink/60">{SITE.address.zip} {SITE.address.city}</p>
+          <div class="mt-5 flex flex-wrap gap-3">
+            <a href={SITE.contact.phoneHref} class="press rounded-full bg-clay px-6 py-3 text-sm font-semibold text-cream">Bel {SITE.contact.phone}</a>
+            <a href={SITE.socials.instagram} target="_blank" rel="noopener" class="press rounded-full border border-ink/20 px-6 py-3 text-sm font-semibold text-ink">Instagram</a>
+          </div>
+          <a href={SITE.contact.emailHref} class="underline-grow mt-3 inline-block text-sm text-ink/60">{SITE.contact.email}</a>
+        </div>
+
+        <div>
+          <p class="eyebrow text-clay">Openingstijden</p>
+          <ul class="mt-4 space-y-1.5">
+            {
+              SITE.hours.map((h) => (
+                <li class="flex justify-between gap-4 border-b border-ink/10 pb-1.5 text-sm">
+                  <span class="text-ink/70">{h.day}</span>
+                  <span class:list={[h.closed ? "text-ink/35" : "font-medium text-ink"]}>{h.time}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="overflow-hidden rounded-3xl border border-ink/10" style="box-shadow: var(--shadow-warm)">
+          <iframe
+            title="Kaart Koffiebar Marcus"
+            src={mapSrc}
+            class="h-64 w-full"
+            style="border:0;filter:sepia(0.2) saturate(1.1)"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("resForm") as HTMLFormElement | null;
+    const ok = document.getElementById("resOk");
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      ok?.classList.remove("hidden");
+      form.querySelector("button")?.setAttribute("disabled", "true");
+      ok?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  </script>
+</Base>

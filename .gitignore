@@ -1,0 +1,15 @@
+# build output
+dist/
+# dependencies
+node_modules/
+# generated types
+.astro/
+# environment variables
+.env
+.env.production
+# macOS
+.DS_Store
+# work / scratch (scrape, refs, scripts)
+_work/
+# film keyframes are source-only; the runtime uses public/film/frames
+public/film/keyframes/
