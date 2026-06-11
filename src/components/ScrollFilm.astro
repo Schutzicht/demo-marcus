@@ -42,6 +42,17 @@ const caps = [
       }
     </div>
 
+    <!-- chapter rail (welke etappe + hoe ver) -->
+    <nav class="film__rail" aria-label="Hoofdstukken">
+      {
+        caps.map((c, i) => (
+          <button class="film__dot" type="button" data-dot={i} aria-label={`Naar ${c.title}`}>
+            <span class="film__dot-num">{c.num}</span>
+          </button>
+        ))
+      }
+    </nav>
+
     <!-- final cta -->
     <div class="film__cta">
       <p class="film__eyebrow text-saffron">{SITE.tagline}</p>
@@ -218,6 +229,53 @@ const caps = [
     .film__cap[data-side="right"] { right: 1.1rem; }
     .film__cap-body { max-width: 66vw; }
     .film__cap-line { width: clamp(1.25rem, 7vw, 3rem); }
+  }
+
+  .film__rail {
+    position: absolute;
+    right: clamp(0.9rem, 2vw, 1.7rem);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .film__dot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 2px 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .film__dot::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(244, 236, 219, 0.3);
+    transition: height 0.45s cubic-bezier(0.16, 1, 0.3, 1), background 0.45s;
+  }
+  .film__dot.is-active::after {
+    background: var(--color-saffron);
+    height: 24px;
+  }
+  .film__dot-num {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    color: rgba(244, 236, 219, 0.55);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .film__dot.is-active .film__dot-num,
+  .film__dot:hover .film__dot-num {
+    opacity: 1;
+  }
+  @media (max-width: 820px) {
+    .film__rail { display: none; }
   }
 
   .film__cta {
@@ -450,13 +508,24 @@ const caps = [
       resize();
       draw(0);
       const total = Math.round(window.innerHeight * (FILM_VH + HOLD_VH));
-      let targetFP = 0, lastFp = -1;
+      let targetFP = 0, lastFp = -1, activeDot = -1;
+      const dots = Array.from(film.querySelectorAll<HTMLElement>(".film__dot"));
+      const ats = caps.map((c) => parseFloat(c.dataset.at || "0"));
       // Pin the stage; onUpdate only delivers the target progress (no scrub/snap),
       // a rAF loop eases the shown frame toward it for a smooth, clean scrub.
-      ScrollTrigger.create({
+      const st = ScrollTrigger.create({
         trigger: film, start: "top top", end: "+=" + total,
         pin: sticky, anticipatePin: 1, invalidateOnRefresh: true,
         onUpdate: (self) => { targetFP = Math.min(1, self.progress / filmFrac); },
+      });
+      // Klik op een stip = spring naar dat hoofdstuk.
+      const lenis = (window as any).__lenis;
+      dots.forEach((dot, i) => {
+        dot.addEventListener("click", () => {
+          const y = st.start + ats[i] * filmFrac * (st.end - st.start);
+          if (lenis) lenis.scrollTo(y, { duration: 1 });
+          else window.scrollTo({ top: y, behavior: "smooth" });
+        });
       });
       gsap.ticker.add(() => {
         renderFP += (targetFP - renderFP) * 0.1;
@@ -474,6 +543,10 @@ const caps = [
           const d = Math.abs(fp - at);
           cap.style.opacity = String(d > 0.07 ? 0 : 1 - d / 0.07);
         });
+        // actieve hoofdstuk-stip = dichtstbijzijnde etappe
+        let a = 0;
+        for (let i = 1; i < ats.length; i++) if (Math.abs(fp - ats[i]) < Math.abs(fp - ats[a])) a = i;
+        if (a !== activeDot) { activeDot = a; dots.forEach((d, i) => d.classList.toggle("is-active", i === a)); }
       });
       window.addEventListener("resize", resize);
       ScrollTrigger.refresh();
