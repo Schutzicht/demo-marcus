@@ -15,42 +15,92 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
   </header>
 
   <section class="bg-cream py-20 sm:py-24">
-    <div class="mx-auto grid max-w-7xl gap-14 px-6 sm:px-10 lg:grid-cols-[1.1fr_0.9fr]">
-      <!-- form -->
+    <div class="mx-auto grid max-w-7xl gap-14 px-6 sm:px-10 lg:grid-cols-[1.15fr_0.85fr]">
+      <!-- reservation flow -->
       <div data-reveal>
-        <form id="resForm" class="rounded-3xl border border-ink/10 bg-plaster p-7 sm:p-9">
-          <h2 class="font-display text-3xl font-semibold text-ink">Vraag een tafel aan</h2>
-          <p class="mt-2 text-sm text-ink/55">Demo-formulier. We bevestigen normaal binnen een paar uur.</p>
+        <form id="resForm" class="rounded-3xl border border-ink/10 bg-plaster p-7 sm:p-9" novalidate>
+          <h2 class="font-display text-3xl font-semibold text-ink">Reserveer je tafel</h2>
+          <p class="mt-2 text-sm text-ink/55">Kies een moment, wij zetten de koffie klaar.</p>
+
+          <!-- type -->
+          <fieldset class="mt-7">
+            <legend class="text-sm font-medium text-ink/70">Wat wil je reserveren?</legend>
+            <div class="mt-2 grid grid-cols-2 gap-2" role="tablist">
+              <button type="button" class="res-type press rounded-xl border border-ink/15 bg-cream px-4 py-3 text-left text-sm font-semibold text-ink transition-colors" data-type="tafel" aria-pressed="true">
+                <span class="block">Een tafel</span>
+                <span class="block text-xs font-normal text-ink/50">Koffie, lunch of borrel</span>
+              </button>
+              <button type="button" class="res-type press rounded-xl border border-ink/15 bg-cream px-4 py-3 text-left text-sm font-semibold text-ink transition-colors" data-type="hightea" aria-pressed="false">
+                <span class="block">High tea</span>
+                <span class="block text-xs font-normal text-ink/50">Vanaf 2 personen</span>
+              </button>
+            </div>
+          </fieldset>
+
+          <div class="mt-6 grid gap-6 sm:grid-cols-2">
+            <!-- personen -->
+            <div>
+              <label class="text-sm font-medium text-ink/70">Aantal personen</label>
+              <div class="mt-1.5 flex items-center gap-3">
+                <button type="button" id="persMin" class="press flex h-11 w-11 items-center justify-center rounded-xl border border-ink/15 bg-cream text-xl text-ink" aria-label="Minder">&minus;</button>
+                <span id="persVal" class="w-8 text-center font-display text-2xl text-ink">2</span>
+                <button type="button" id="persPlus" class="press flex h-11 w-11 items-center justify-center rounded-xl border border-ink/15 bg-cream text-xl text-ink" aria-label="Meer">+</button>
+              </div>
+            </div>
+            <!-- datum -->
+            <div>
+              <label for="resDatum" class="text-sm font-medium text-ink/70">Datum</label>
+              <input id="resDatum" type="date" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+            </div>
+          </div>
+
+          <!-- tijd -->
+          <div class="mt-6">
+            <label class="text-sm font-medium text-ink/70">Tijd</label>
+            <div id="resSlots" class="mt-2 flex flex-wrap gap-2">
+              <span class="text-sm text-ink/45">Kies eerst een datum.</span>
+            </div>
+          </div>
+
+          <!-- contact -->
           <div class="mt-7 grid gap-5 sm:grid-cols-2">
             <label class="block">
               <span class="text-sm font-medium text-ink/70">Naam</span>
-              <input required name="naam" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+              <input name="naam" id="resNaam" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
             </label>
             <label class="block">
               <span class="text-sm font-medium text-ink/70">Telefoon</span>
-              <input name="tel" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+              <input name="tel" id="resTel" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
             </label>
-            <label class="block">
-              <span class="text-sm font-medium text-ink/70">Datum</span>
-              <input required type="date" name="datum" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
-            </label>
-            <label class="block">
-              <span class="text-sm font-medium text-ink/70">Aantal personen</span>
-              <input required type="number" min="1" max="20" value="2" name="personen" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
+            <label class="block sm:col-span-2">
+              <span class="text-sm font-medium text-ink/70">E-mail</span>
+              <input name="email" id="resEmail" type="email" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" />
             </label>
             <label class="block sm:col-span-2">
               <span class="text-sm font-medium text-ink/70">Opmerking</span>
-              <textarea name="bericht" rows="3" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" placeholder="High tea, kinderstoel, allergie..."></textarea>
+              <textarea name="opmerking" id="resOpm" rows="2" class="mt-1.5 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-ink outline-none transition-colors focus:border-clay" placeholder="Kinderstoel, allergie, gelegenheid..."></textarea>
             </label>
           </div>
-          <button type="submit" class="press mt-7 w-full rounded-full bg-ink py-4 text-sm font-semibold text-cream sm:w-auto sm:px-10">Verstuur aanvraag</button>
-          <p id="resOk" class="mt-4 hidden rounded-xl bg-zellige/10 px-4 py-3 text-sm text-zellige">
-            Bedankt! Dit is een demo, dus er wordt nog niets verstuurd. In de live site landt dit bij Marcus.
-          </p>
+
+          <p id="resError" class="mt-4 hidden rounded-xl bg-clay/10 px-4 py-3 text-sm text-clay-deep"></p>
+
+          <button type="submit" class="press mt-7 w-full rounded-full bg-ink py-4 text-sm font-semibold text-cream sm:w-auto sm:px-10">Reservering versturen</button>
+          <p class="mt-3 text-xs text-ink/45">Demo: je reservering wordt lokaal opgeslagen en verschijnt in het beheer-dashboard.</p>
         </form>
+
+        <!-- confirmation -->
+        <div id="resOk" class="hidden rounded-3xl border border-zellige/20 bg-cream p-7 sm:p-9" style="box-shadow: var(--shadow-warm)">
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-zellige/15">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="text-zellige"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="mt-5 font-display text-3xl font-semibold text-ink">Tot snel!</h2>
+          <p class="mt-2 text-ink/65">We hebben je aanvraag ontvangen. Je krijgt normaal binnen een paar uur een bevestiging.</p>
+          <dl id="resSummary" class="mt-6 divide-y divide-ink/10 border-y border-ink/10 text-sm"></dl>
+          <button id="resReset" class="press mt-7 rounded-full border border-ink/20 px-7 py-3 text-sm font-semibold text-ink">Nog een reservering</button>
+        </div>
       </div>
 
-      <!-- contact + hours -->
+      <!-- contact + hours + map -->
       <div class="flex flex-col gap-8" data-reveal data-reveal-delay="1">
         <div>
           <p class="eyebrow text-clay">Vind ons</p>
@@ -91,13 +141,143 @@ const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
   </section>
 
   <script>
-    const form = document.getElementById("resForm") as HTMLFormElement | null;
-    const ok = document.getElementById("resOk");
-    form?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      ok?.classList.remove("hidden");
-      form.querySelector("button")?.setAttribute("disabled", "true");
-      ok?.scrollIntoView({ behavior: "smooth", block: "center" });
+    import { slotsVoor, voegToe, eersteOpenDatum, isOpen, formatNL, toISODate, type ResType } from "../lib/reserveringen";
+
+    const form = document.getElementById("resForm") as HTMLFormElement;
+    const okCard = document.getElementById("resOk")!;
+    const errEl = document.getElementById("resError")!;
+    const datumEl = document.getElementById("resDatum") as HTMLInputElement;
+    const slotsEl = document.getElementById("resSlots")!;
+    const persVal = document.getElementById("persVal")!;
+    const summary = document.getElementById("resSummary")!;
+
+    let type: ResType = "tafel";
+    let personen = 2;
+    let tijd: string | null = null;
+
+    const today = toISODate(new Date());
+    datumEl.min = today;
+    datumEl.value = eersteOpenDatum();
+
+    function renderTypes() {
+      document.querySelectorAll<HTMLButtonElement>(".res-type").forEach((b) => {
+        const on = b.dataset.type === type;
+        b.setAttribute("aria-pressed", String(on));
+        b.style.borderColor = on ? "var(--color-clay)" : "";
+        b.style.background = on ? "var(--color-clay)" : "";
+        b.style.color = on ? "var(--color-cream)" : "";
+        b.querySelectorAll("span").forEach((s) => ((s as HTMLElement).style.color = on ? "rgba(244,236,219,.75)" : ""));
+        const title = b.querySelector("span");
+        if (title) (title as HTMLElement).style.color = on ? "var(--color-cream)" : "";
+      });
+    }
+
+    function renderSlots() {
+      tijd = null;
+      const datum = datumEl.value;
+      if (!datum || !isOpen(datum)) {
+        slotsEl.innerHTML = `<span class="text-sm text-clay-deep">Op deze dag zijn we gesloten, kies een andere datum.</span>`;
+        return;
+      }
+      const slots = slotsVoor(datum, type, personen);
+      if (!slots.length) {
+        slotsEl.innerHTML = `<span class="text-sm text-ink/45">Geen tijden meer beschikbaar op deze dag.</span>`;
+        return;
+      }
+      slotsEl.innerHTML = "";
+      slots.forEach((s) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = s.tijd;
+        btn.disabled = s.vol;
+        btn.className =
+          "res-slot press rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors " +
+          (s.vol
+            ? "cursor-not-allowed border-ink/10 bg-ink/[0.04] text-ink/30 line-through"
+            : "border-ink/15 bg-cream text-ink hover:border-clay");
+        if (!s.vol) {
+          btn.addEventListener("click", () => {
+            tijd = s.tijd;
+            document.querySelectorAll<HTMLButtonElement>(".res-slot").forEach((x) => {
+              x.style.background = ""; x.style.borderColor = ""; x.style.color = "";
+            });
+            btn.style.background = "var(--color-ink)";
+            btn.style.borderColor = "var(--color-ink)";
+            btn.style.color = "var(--color-cream)";
+          });
+        }
+        slotsEl.appendChild(btn);
+      });
+    }
+
+    document.querySelectorAll<HTMLButtonElement>(".res-type").forEach((b) => {
+      b.addEventListener("click", () => {
+        type = (b.dataset.type as ResType) || "tafel";
+        if (type === "hightea" && personen < 2) { personen = 2; persVal.textContent = "2"; }
+        renderTypes();
+        renderSlots();
+      });
     });
+    document.getElementById("persMin")!.addEventListener("click", () => {
+      const min = type === "hightea" ? 2 : 1;
+      personen = Math.max(min, personen - 1); persVal.textContent = String(personen); renderSlots();
+    });
+    document.getElementById("persPlus")!.addEventListener("click", () => {
+      personen = Math.min(12, personen + 1); persVal.textContent = String(personen); renderSlots();
+    });
+    datumEl.addEventListener("change", renderSlots);
+
+    function fail(msg: string) {
+      errEl.textContent = msg;
+      errEl.classList.remove("hidden");
+      errEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      errEl.classList.add("hidden");
+      const naam = (document.getElementById("resNaam") as HTMLInputElement).value.trim();
+      const tel = (document.getElementById("resTel") as HTMLInputElement).value.trim();
+      const email = (document.getElementById("resEmail") as HTMLInputElement).value.trim();
+      const opmerking = (document.getElementById("resOpm") as HTMLTextAreaElement).value.trim();
+      if (!datumEl.value || !isOpen(datumEl.value)) return fail("Kies een datum waarop we open zijn.");
+      if (!tijd) return fail("Kies een tijd.");
+      if (!naam) return fail("Vul je naam in.");
+      if (!tel && !email) return fail("Laat een telefoonnummer of e-mail achter.");
+
+      const res = voegToe({ type, personen, datum: datumEl.value, tijd, naam, telefoon: tel, email, opmerking });
+
+      summary.innerHTML = "";
+      const rows: [string, string][] = [
+        ["Referentie", res.ref],
+        ["Wat", type === "hightea" ? "High tea" : "Tafel"],
+        ["Wanneer", `${formatNL(res.datum)}, ${res.tijd}`],
+        ["Personen", String(res.personen)],
+        ["Naam", res.naam],
+      ];
+      rows.forEach(([k, v]) => {
+        const row = document.createElement("div");
+        row.className = "flex justify-between gap-4 py-2.5";
+        row.innerHTML = `<dt class="text-ink/55">${k}</dt><dd class="font-medium text-ink text-right">${v}</dd>`;
+        summary.appendChild(row);
+      });
+
+      form.style.display = "none";
+      okCard.classList.remove("hidden");
+      okCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    document.getElementById("resReset")!.addEventListener("click", () => {
+      form.reset();
+      tijd = null; type = "tafel"; personen = 2; persVal.textContent = "2";
+      datumEl.value = eersteOpenDatum();
+      renderTypes(); renderSlots();
+      okCard.classList.add("hidden");
+      form.style.display = "";
+      form.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    renderTypes();
+    renderSlots();
   </script>
 </Base>

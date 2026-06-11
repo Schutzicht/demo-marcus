@@ -1,0 +1,185 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Beheer — Koffiebar Marcus" active="">
+  <header class="relative overflow-hidden bg-espresso pt-32 text-cream grain sm:pt-36">
+    <div class="relative mx-auto max-w-6xl px-6 pb-10 sm:px-10">
+      <p class="eyebrow text-saffron">Reserveringen</p>
+      <h1 class="mt-3 text-giant font-semibold">Beheer</h1>
+      <p class="mt-4 max-w-xl text-cream/65">
+        Alle aanvragen op één plek, bevestig of annuleer met één tik. Demo: data staat lokaal in deze browser; in de
+        live versie koppelt dit aan de echte agenda en mailbevestigingen.
+      </p>
+    </div>
+  </header>
+
+  <section class="bg-cream py-12 sm:py-16">
+    <div class="mx-auto max-w-6xl px-6 sm:px-10">
+      <!-- stats -->
+      <div id="stats" class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4"></div>
+
+      <!-- toolbar -->
+      <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
+        <div id="filters" class="flex flex-wrap gap-2"></div>
+        <div class="flex gap-2">
+          <button id="seed" class="press rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink/70 hover:bg-ink hover:text-cream">Demo vullen</button>
+          <button id="clear" class="press rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink/70 hover:bg-clay hover:text-cream hover:border-clay">Alles wissen</button>
+        </div>
+      </div>
+
+      <!-- list -->
+      <div id="list" class="mt-8 space-y-8"></div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { laad, zetStatus, verwijder, voegToe, formatNL, toISODate, type Reservering, type ResStatus } from "../lib/reserveringen";
+
+  type Filter = "aankomend" | "vandaag" | "alle" | "geannuleerd";
+  let filter: Filter = "aankomend";
+  const today = toISODate(new Date());
+
+  const esc = (s: string) =>
+    String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
+  const statsEl = document.getElementById("stats")!;
+  const filtersEl = document.getElementById("filters")!;
+  const listEl = document.getElementById("list")!;
+
+  const STATUS: Record<ResStatus, { label: string; cls: string }> = {
+    nieuw: { label: "Nieuw", cls: "bg-saffron/20 text-clay-deep" },
+    bevestigd: { label: "Bevestigd", cls: "bg-zellige/15 text-zellige" },
+    geannuleerd: { label: "Geannuleerd", cls: "bg-ink/10 text-ink/45" },
+  };
+
+  function statCard(label: string, value: string | number) {
+    return `<div class="rounded-2xl border border-ink/10 bg-plaster p-4 sm:p-5">
+      <div class="font-display text-3xl font-semibold text-ink sm:text-4xl">${value}</div>
+      <div class="mt-1 text-xs uppercase tracking-wider text-ink/50">${label}</div></div>`;
+  }
+
+  function renderStats(all: Reservering[]) {
+    const actief = all.filter((r) => r.status !== "geannuleerd");
+    const vandaag = actief.filter((r) => r.datum === today);
+    const aankomend = actief.filter((r) => r.datum >= today);
+    const gastenVandaag = vandaag.reduce((s, r) => s + r.personen, 0);
+    statsEl.innerHTML =
+      statCard("Vandaag", vandaag.length) +
+      statCard("Gasten vandaag", gastenVandaag) +
+      statCard("Aankomend", aankomend.length) +
+      statCard("Totaal", all.length);
+  }
+
+  function renderFilters() {
+    const opts: [Filter, string][] = [
+      ["aankomend", "Aankomend"],
+      ["vandaag", "Vandaag"],
+      ["alle", "Alle"],
+      ["geannuleerd", "Geannuleerd"],
+    ];
+    filtersEl.innerHTML = "";
+    opts.forEach(([key, label]) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      const on = filter === key;
+      b.className =
+        "press rounded-full px-4 py-2 text-sm font-medium transition-colors " +
+        (on ? "bg-ink text-cream" : "border border-ink/15 text-ink/70 hover:border-ink/40");
+      b.addEventListener("click", () => { filter = key; render(); });
+      filtersEl.appendChild(b);
+    });
+  }
+
+  function apply(all: Reservering[]): Reservering[] {
+    let list = [...all];
+    if (filter === "aankomend") list = list.filter((r) => r.datum >= today && r.status !== "geannuleerd");
+    else if (filter === "vandaag") list = list.filter((r) => r.datum === today);
+    else if (filter === "geannuleerd") list = list.filter((r) => r.status === "geannuleerd");
+    list.sort((a, b) => (a.datum + a.tijd).localeCompare(b.datum + b.tijd));
+    return list;
+  }
+
+  function card(r: Reservering): string {
+    const s = STATUS[r.status];
+    const contact = [r.telefoon, r.email].filter(Boolean).map(esc).join(" · ");
+    const acties =
+      r.status === "geannuleerd"
+        ? `<button data-act="verwijder" data-id="${r.id}" class="press rounded-full border border-ink/15 px-4 py-1.5 text-xs font-medium text-ink/60 hover:border-clay hover:text-clay">Verwijderen</button>`
+        : `${r.status === "nieuw" ? `<button data-act="bevestig" data-id="${r.id}" class="press rounded-full bg-zellige px-4 py-1.5 text-xs font-semibold text-cream">Bevestigen</button>` : ""}
+           <button data-act="annuleer" data-id="${r.id}" class="press rounded-full border border-ink/15 px-4 py-1.5 text-xs font-medium text-ink/60 hover:border-clay hover:text-clay">Annuleren</button>`;
+    return `<div class="flex flex-col gap-4 rounded-2xl border border-ink/10 bg-white/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-start gap-4">
+        <div class="shrink-0 text-center">
+          <div class="font-display text-2xl font-semibold text-ink">${esc(r.tijd)}</div>
+          <div class="text-xs text-ink/45">${r.personen}p</div>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-display text-lg font-medium text-ink">${esc(r.naam)}</span>
+            <span class="rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide ${r.type === "hightea" ? "bg-clay/10 text-clay" : "bg-ink/8 text-ink/55"}">${r.type === "hightea" ? "High tea" : "Tafel"}</span>
+            <span class="rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide ${s.cls}">${s.label}</span>
+          </div>
+          ${contact ? `<div class="mt-1 text-sm text-ink/55">${contact}</div>` : ""}
+          ${r.opmerking ? `<div class="mt-1 text-sm text-ink/55">"${esc(r.opmerking)}"</div>` : ""}
+          <div class="mt-1 text-xs text-ink/35">${esc(r.ref)}</div>
+        </div>
+      </div>
+      <div class="flex shrink-0 gap-2">${acties}</div>
+    </div>`;
+  }
+
+  function render() {
+    const all = laad();
+    renderStats(all);
+    renderFilters();
+    const list = apply(all);
+    if (!list.length) {
+      listEl.innerHTML = `<div class="rounded-2xl border border-dashed border-ink/15 bg-plaster/50 py-16 text-center text-ink/50">Geen reserveringen in deze weergave.</div>`;
+      return;
+    }
+    // group by date
+    const groups = new Map<string, Reservering[]>();
+    list.forEach((r) => { (groups.get(r.datum) ?? groups.set(r.datum, []).get(r.datum)!).push(r); });
+    listEl.innerHTML = "";
+    for (const [datum, items] of groups) {
+      const block = document.createElement("div");
+      block.innerHTML =
+        `<div class="mb-3 flex items-baseline gap-3"><h2 class="font-display text-xl font-semibold capitalize text-ink">${formatNL(datum)}</h2><span class="text-sm text-ink/40">${items.length} reservering${items.length === 1 ? "" : "en"}</span></div>` +
+        `<div class="space-y-3">${items.map(card).join("")}</div>`;
+      listEl.appendChild(block);
+    }
+  }
+
+  listEl.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-act]");
+    if (!btn) return;
+    const id = btn.dataset.id!;
+    const act = btn.dataset.act!;
+    if (act === "bevestig") zetStatus(id, "bevestigd");
+    else if (act === "annuleer") zetStatus(id, "geannuleerd");
+    else if (act === "verwijder") verwijder(id);
+    render();
+  });
+
+  document.getElementById("clear")!.addEventListener("click", () => {
+    if (confirm("Alle reserveringen wissen?")) { localStorage.removeItem("marcus_reserveringen_v1"); render(); }
+  });
+
+  document.getElementById("seed")!.addEventListener("click", () => {
+    const d = new Date();
+    const iso = (off: number) => { const x = new Date(d); x.setDate(x.getDate() + off); return toISODate(x); };
+    const samples = [
+      { type: "tafel" as const, personen: 2, datum: iso(0), tijd: "10:30", naam: "Famke de Wit", telefoon: "06 12345678", email: "", opmerking: "Bij het raam graag" },
+      { type: "hightea" as const, personen: 4, datum: iso(1), tijd: "14:00", naam: "Karin Bakker", telefoon: "", email: "karin@example.nl", opmerking: "1x glutenvrij" },
+      { type: "tafel" as const, personen: 6, datum: iso(2), tijd: "12:30", naam: "Team Dockwize", telefoon: "0118 000000", email: "", opmerking: "Lunchafspraak" },
+      { type: "tafel" as const, personen: 2, datum: iso(0), tijd: "15:30", naam: "Joost & Lieke", telefoon: "06 87654321", email: "", opmerking: "" },
+    ];
+    samples.forEach((s) => voegToe(s));
+    filter = "aankomend";
+    render();
+  });
+
+  render();
+</script>
