@@ -200,6 +200,32 @@
   animation: marquee 30s linear infinite;
 }
 
+/* Page-transition curtain (filmische wipe tussen pagina's) */
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ink);
+  transform: translateY(100%);
+  transition: transform 0.5s cubic-bezier(0.7, 0, 0.2, 1);
+  pointer-events: none;
+}
+.curtain__word {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.5rem, 9vw, 6rem);
+  letter-spacing: -0.03em;
+  color: rgba(244, 236, 219, 0.92);
+}
+@media (prefers-reduced-motion: reduce) {
+  .curtain {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] {
     opacity: 1 !important;

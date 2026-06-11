@@ -59,6 +59,14 @@ const caps = [
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
 
+    <button id="filmSound" class="film__sound press" type="button" aria-label="Geluid aanzetten" aria-pressed="false">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M11 5 6 9H3v6h3l5 4V5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+        <path class="snd-wave" d="M16 9a4 4 0 0 1 0 6M18.6 6.4a8 8 0 0 1 0 11.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        <line class="snd-mute" x1="16.5" y1="8" x2="22" y2="16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+    </button>
+
     <div class="film__loader">
       <div class="film__loader-word">{SITE.wordmark}</div>
       <div class="film__loader-bar"><span></span></div>
@@ -296,6 +304,36 @@ const caps = [
     50% { transform: translateY(4px); }
   }
 
+  .film__sound {
+    position: absolute;
+    bottom: 1.4rem;
+    left: 1.4rem;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid rgba(244, 236, 219, 0.25);
+    background: rgba(20, 11, 5, 0.35);
+    color: rgba(244, 236, 219, 0.8);
+    backdrop-filter: blur(4px);
+    transition: color 0.3s, border-color 0.3s, background 0.3s;
+  }
+  .film__sound:hover {
+    color: var(--color-cream);
+    border-color: rgba(244, 236, 219, 0.5);
+  }
+  .film__sound.is-on {
+    color: var(--color-saffron);
+    border-color: rgba(224, 165, 46, 0.5);
+  }
+  .film__sound .snd-wave { opacity: 0; transition: opacity 0.3s; }
+  .film__sound.is-on .snd-wave { opacity: 1; }
+  .film__sound .snd-mute { opacity: 1; transition: opacity 0.3s; }
+  .film__sound.is-on .snd-mute { opacity: 0; }
+
   .film__loader {
     position: absolute;
     inset: 0;
@@ -457,6 +495,71 @@ const caps = [
     const last = STOPS.length - 1;
     const lenis = () => (window as any).__lenis;
 
+    // ---- Sound: procedural warm ambience + soft step tones (default off) ----
+    let actx: any = null;
+    let master: any = null;
+    let pad: { stop: () => void } | null = null;
+    let soundOn = false;
+    function ensureAudio() {
+      if (actx) return;
+      const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AC) return;
+      actx = new AC();
+      master = actx.createGain();
+      master.gain.value = 0;
+      master.connect(actx.destination);
+    }
+    function startPad() {
+      if (!actx || !master || pad) return;
+      const out = actx.createGain(); out.gain.value = 0;
+      const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 600;
+      out.connect(lp); lp.connect(master);
+      const oscs = [110, 164.81, 220].map((f) => {
+        const o = actx.createOscillator(); o.type = "sine"; o.frequency.value = f;
+        const g = actx.createGain(); g.gain.value = 0.32;
+        o.connect(g); g.connect(out); o.start(); return o;
+      });
+      const lfo = actx.createOscillator(); lfo.frequency.value = 0.08;
+      const lfoG = actx.createGain(); lfoG.gain.value = 0.16;
+      lfo.connect(lfoG); lfoG.connect(out.gain); lfo.start();
+      out.gain.setTargetAtTime(0.5, actx.currentTime, 1.4);
+      pad = {
+        stop: () => {
+          out.gain.setTargetAtTime(0, actx.currentTime, 0.5);
+          setTimeout(() => { oscs.forEach((o: any) => { try { o.stop(); } catch {} }); try { lfo.stop(); } catch {} }, 700);
+        },
+      };
+    }
+    function stopPad() { if (pad) { pad.stop(); pad = null; } }
+    function chime(idx: number) {
+      if (!soundOn || !actx || !master) return;
+      const scale = [261.63, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25];
+      const f = scale[Math.min(scale.length - 1, Math.max(0, idx))];
+      const o = actx.createOscillator(); o.type = "triangle"; o.frequency.value = f;
+      const g = actx.createGain(); const t = actx.currentTime;
+      o.connect(g); g.connect(master);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.16, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0008, t + 0.7);
+      o.start(t); o.stop(t + 0.75);
+    }
+    function setSound(on: boolean) {
+      soundOn = on;
+      const btn = document.getElementById("filmSound");
+      btn?.classList.toggle("is-on", on);
+      btn?.setAttribute("aria-pressed", String(on));
+      btn?.setAttribute("aria-label", on ? "Geluid uitzetten" : "Geluid aanzetten");
+      if (on) {
+        ensureAudio();
+        if (actx?.state === "suspended") actx.resume();
+        if (master) master.gain.setTargetAtTime(0.9, actx.currentTime, 0.3);
+        if (engaged) startPad();
+      } else {
+        stopPad();
+        if (master && actx) master.gain.setTargetAtTime(0, actx.currentTime, 0.2);
+      }
+    }
+
     function render(p: number) {
       draw(p * (count - 1));
       if (progEl) progEl.style.transform = "scaleX(" + p + ")";
@@ -475,6 +578,7 @@ const caps = [
       engaged = true;
       document.documentElement.style.overflow = "hidden";
       lenis()?.stop();
+      if (soundOn) startPad();
     }
     function release(toContent: boolean) {
       if (!engaged) return;
@@ -482,6 +586,7 @@ const caps = [
       releasedAt = performance.now();
       document.documentElement.style.overflow = "";
       lenis()?.start();
+      stopPad();
       if (toContent) {
         const y = film.offsetTop + film.offsetHeight;
         const l = lenis();
@@ -494,6 +599,7 @@ const caps = [
       target = Math.max(0, Math.min(last, target));
       if (target === chapter || animating) return;
       animating = true;
+      chime(target);
       const obj = { p: fp };
       gsap.to(obj, {
         p: STOPS[target],
@@ -557,6 +663,7 @@ const caps = [
       try { (history as any).scrollRestoration = "manual"; } catch (e) {}
       window.scrollTo(0, 0);
       lock();
+      document.getElementById("filmSound")?.addEventListener("click", () => setSound(!soundOn));
       window.addEventListener("wheel", onWheel, { passive: false });
       window.addEventListener("touchstart", onTouchStart, { passive: true });
       window.addEventListener("touchmove", onTouchMove, { passive: false });

@@ -179,6 +179,8 @@ const {
       </div>
     </div>
 
+    <div class="curtain" aria-hidden="true"><span class="curtain__word">{SITE.wordmark}</span></div>
+
     <script>
       import Lenis from "lenis";
       import { gsap } from "gsap";
@@ -247,6 +249,45 @@ const {
         );
         fo.observe(footer);
         cta.style.transition = "opacity .4s ease, transform .5s cubic-bezier(0.16,1,0.3,1)";
+      }
+
+      // ---- Page-transition curtain ----
+      const curtain = document.querySelector<HTMLElement>(".curtain");
+      const reduceCurtain = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (curtain && !reduceCurtain) {
+        // Entering: if we arrived via a curtain navigation, sweep it away upward.
+        if (sessionStorage.getItem("marcus_curtain")) {
+          sessionStorage.removeItem("marcus_curtain");
+          curtain.style.transition = "none";
+          curtain.style.transform = "translateY(0)";
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              curtain.style.transition = "";
+              curtain.style.transform = "translateY(-100%)";
+              window.setTimeout(() => {
+                curtain.style.transition = "none";
+                curtain.style.transform = "translateY(100%)";
+              }, 640);
+            })
+          );
+        }
+        // Leaving: cover the screen, then navigate.
+        document.addEventListener("click", (e) => {
+          const a = (e.target as HTMLElement).closest?.("a[href]") as HTMLAnchorElement | null;
+          if (!a) return;
+          const href = a.getAttribute("href") || "";
+          if (!href || a.target === "_blank" || a.hasAttribute("download")) return;
+          if (href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          let url: URL;
+          try { url = new URL(href, location.href); } catch { return; }
+          if (url.origin !== location.origin || url.pathname === location.pathname) return;
+          e.preventDefault();
+          sessionStorage.setItem("marcus_curtain", "1");
+          curtain.style.transition = "";
+          curtain.style.transform = "translateY(0)";
+          window.setTimeout(() => { location.href = url.href; }, 470);
+        });
       }
     </script>
   </body>
