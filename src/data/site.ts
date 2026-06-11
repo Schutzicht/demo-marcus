@@ -248,15 +248,15 @@ export const STORY = {
     "Die belofte proef je nog in elk kopje en op elk bordje. Marokkaanse gastvrijheid, Zeeuwse nuchterheid en koffie waar tijd in zit.",
   ],
   signature: "De eigenaar",
-  image: "/img/owner-craft.webp",
+  image: "/img/owner.webp",
 };
 
 /* ---------- Instagram feed (demo squares) ---------- */
 export const FEED: string[] = [
-  "/img/feed-1.webp",
-  "/img/feed-2.webp",
-  "/img/feed-3.webp",
-  "/img/feed-4.webp",
+  "/img/feed-a.webp",
+  "/img/feed-b.webp",
+  "/img/feed-c.webp",
+  "/img/feed-d.webp",
 ];
 
 export const AGENCY = {
