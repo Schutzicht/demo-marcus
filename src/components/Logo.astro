@@ -1,0 +1,54 @@
+---
+// Reconstructie van het ronde Marcus-badge-logo (koffieboon + serif wordmark +
+// randtekst). tone "line" = cream lijnwerk voor donkere achtergrond (currentColor),
+// tone "solid" = zwarte schijf met cream content (authentiek, voor lichte bg / favicon).
+interface Props {
+  size?: number;
+  tone?: "line" | "solid";
+  class?: string;
+}
+const { size = 96, tone = "line", class: cls = "" } = Astro.props;
+const solid = tone === "solid";
+const ink = "#1c130a";
+const cream = "#f4ecdb";
+const c = solid ? cream : "currentColor"; // content + ring color
+---
+
+<svg
+  class={cls}
+  width={size}
+  height={size}
+  viewBox="0 0 200 200"
+  fill="none"
+  role="img"
+  aria-label="Koffiebar Marcus"
+>
+  {solid && <circle cx="100" cy="100" r="99" fill={ink} />}
+  <circle cx="100" cy="100" r="93" fill="none" stroke={c} stroke-width="1.5" opacity="0.85" />
+  <circle cx="100" cy="100" r="67" fill="none" stroke={c} stroke-width="1" opacity="0.4" />
+
+  <defs>
+    <path id="arcTop" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" />
+    <path id="arcBot" d="M100,100 m-78,0 a78,78 0 1,0 156,0 a78,78 0 1,0 -156,0" />
+  </defs>
+  <g fill={c} font-family="'Inter Variable', sans-serif" font-size="9" font-weight="600" letter-spacing="2">
+    <text text-anchor="middle"><textPath href="#arcTop" startOffset="25%">KOFFIEBAR · VLISSINGEN</textPath></text>
+    <text text-anchor="middle"><textPath href="#arcBot" startOffset="25%">COFFEE · TEA BLENDS &amp; SMOOTHIES</textPath></text>
+  </g>
+
+  <!-- koffieboon-embleem -->
+  <g stroke={c} stroke-width="2.4" fill="none" stroke-linecap="round">
+    <ellipse cx="100" cy="61" rx="11" ry="16" />
+    <path d="M100,46 C93.5,53 93.5,69 100,76" />
+  </g>
+
+  <text
+    x="100"
+    y="126"
+    text-anchor="middle"
+    fill={c}
+    font-family="'Fraunces Variable', Georgia, serif"
+    font-weight="600"
+    font-size="25"
+    letter-spacing="1">MARCUS</text>
+</svg>

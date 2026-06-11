@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import { SITE } from "../data/site";
+import Logo from "../components/Logo.astro";
 
 interface Props {
   title?: string;
@@ -106,6 +107,7 @@ const {
       <div class="relative mx-auto max-w-7xl px-6 pb-10 pt-20 sm:px-10">
         <div class="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr]">
           <div>
+            <Logo tone="line" size={74} class="mb-6 text-cream/90" />
             <p class="eyebrow text-saffron">{SITE.tagline}</p>
             <p class="mt-5 max-w-sm font-display text-2xl leading-tight text-cream/90">
               {SITE.intro}
