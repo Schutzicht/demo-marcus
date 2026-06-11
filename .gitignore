@@ -13,3 +13,4 @@ node_modules/
 _work/
 # film keyframes are source-only; the runtime uses public/film/frames
 public/film/keyframes/
+.vercel
